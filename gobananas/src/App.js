@@ -1,27 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Container, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, AppBar, Toolbar, Typography, InputAdornment } from '@mui/material';
+import {
+  Container,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  AppBar,
+  Toolbar,
+  Typography,
+  InputAdornment
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 function App() {
   const [dogs, setDogs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDogs = async () => {
+    const fetchDogs = async (count) => {
+      const dogPromises = Array.from({ length: count }, () =>
+        fetch('https://dog.ceo/api/breeds/image/random').then(response => response.json())
+      );
+      const dogResponses = await Promise.all(dogPromises);
+      return dogResponses.map((response, index) => ({ id: index, url: response.message }));
+    };
+
+    const loadDogs = async () => {
       try {
-        const dogPromises = Array.from({ length: 50 }, () =>
-          fetch('https://dog.ceo/api/breeds/image/random').then(response => response.json())
-        );
-        const dogResponses = await Promise.all(dogPromises);
-        setDogs(dogResponses.map((response, index) => ({ id: index, url: response.message })));
+        const initialDogs = await fetchDogs(15); // Fetch 15 images initially
+        setDogs(initialDogs);
+        setLoading(false);
+
+        const additionalDogs = await fetchDogs(50); // Fetch additional  images in the background
+        setDogs(prevDogs => [...prevDogs, ...additionalDogs]);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setLoading(false);
       }
     };
-    fetchDogs();
+
+    loadDogs();
   }, []);
 
-  const filteredDogs = dogs.filter(dog => 
+  const filteredDogs = dogs.filter(dog =>
     dog.url.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -69,6 +95,13 @@ function App() {
                   </TableCell>
                 </TableRow>
               ))}
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
