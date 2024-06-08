@@ -9,7 +9,7 @@ function App() {
   useEffect(() => {
     const fetchDogs = async () => {
       try {
-        const dogPromises = Array.from({ length: 100 }, () =>
+        const dogPromises = Array.from({ length: 50 }, () =>
           fetch('https://dog.ceo/api/breeds/image/random').then(response => response.json())
         );
         const dogResponses = await Promise.all(dogPromises);
